@@ -166,19 +166,13 @@ int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
 int  octetstr_rd( uint8_t* r, int n_r          ) {
   char x[ 2 + 1 + 2 * ( n_r ) + 1 ]; // 2-char length, 1-char colon, 2*n_r-char data, 1-char terminator
 
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, '1');
   for( int i = 0; true; i++ ) {
-
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, '2');
     x[ i ] = scale_uart_rd( SCALE_UART_MODE_BLOCKING );
-    if( x[ i ] == '\x0D' ) {
 
-      scale_uart_wr( SCALE_UART_MODE_BLOCKING, '3');
+    if( x[ i ] == '\x0D' ) {
       x[ i ] = '\x00'; break;
     }
   }
-
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, '4');
 
   return _octetstr_rd( r, n_r, x );
 }
@@ -257,8 +251,7 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
     *
     * 1. If command is inspect, then
     *
-    *    - write the SIZEOF_BLK pa
-          scale_uart_wr( SCALE_UART_MODE_BLOCKING, 'h');rameter,
+    *    - write the SIZEOF_BLK parameter,
     *      i.e., number of bytes in an  AES-128 plaintext  m, or ciphertext c,
     *      to the UART,
     *    - write the SIZEOF_KEY parameter,
