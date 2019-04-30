@@ -183,6 +183,21 @@ int  octetstr_rd( uint8_t* r, int n_r          ) {
   * \param[in]  n the number of octets written
   */
 void octetstr_wr( const uint8_t* x, int n_x ) {
+  uint8_t len1 = Hex2String((n_x >> 4) & 0x0F);
+  uint8_t len2 = Hex2String(n_x & 0x0F);
+  scale_uart_wr( SCALE_UART_MODE_BLOCKING, len1 );
+  scale_uart_wr( SCALE_UART_MODE_BLOCKING, len2 );
+  scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A );
+
+  for(int i = 0; i<n_x; ++i){
+    uint8_t char1 = Hex2String((x[i]>>4)&0x0F);
+    uint8_t char2 = Hex2String(x[i]&0x0F);
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, char1 );
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, char2 );
+  }
+  scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0D );
+  scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0A );
+
   return;
 }
 
