@@ -1,7 +1,7 @@
 # Copyright (C) 2018 Daniel Page <csdsp@bristol.ac.uk>
 #
-# Use of this source code is restricted per the CC BY-NC-ND license, a copy of 
-# which can be found via http://creativecommons.org (and should be included as 
+# Use of this source code is restricted per the CC BY-NC-ND license, a copy of
+# which can be found via http://creativecommons.org (and should be included as
 # LICENSE.txt within the associated archive or repository).
 
 import argparse, binascii, logging, os, select, signal, socket, struct, sys
@@ -79,9 +79,9 @@ if ( __name__ == '__main__' ) :
 
   emu =  unicorn.Uc(  unicorn.UC_ARCH_ARM,  unicorn.UC_MODE_THUMB )
   asm = capstone.Cs( capstone.CS_ARCH_ARM, capstone.CS_MODE_THUMB )
-  
+
   if   ( args.target == 'lpc1114fn28'  ) :
-    emu.mem_map( 0x00000000,  32 * 1024        ) # Figure  6:  32 kB => flash 
+    emu.mem_map( 0x00000000,  32 * 1024        ) # Figure  6:  32 kB => flash
     emu.mem_map( 0x10000000,   4 * 1024        ) # Figure  6:   4 kB => SRAM
     emu.mem_map( 0x1FFF0000,  16 * 1024        ) # Figure  6:  16 kB => boot ROM
     emu.mem_map( 0x40000000, 512 * 1024        ) # Figure  6: 512 kB => APB     peripheral bus
@@ -89,7 +89,7 @@ if ( __name__ == '__main__' ) :
     emu.mem_map( 0xE0000000,   1 * 1024 * 1024 ) # Figure  6:   1 MB => private peripheral bus
 
   elif ( args.target == 'lpc1313fbd48' ) :
-    emu.mem_map( 0x00000000,  32 * 1024        ) # Figure 14:  32 kB => flash 
+    emu.mem_map( 0x00000000,  32 * 1024        ) # Figure 14:  32 kB => flash
     emu.mem_map( 0x10000000,   8 * 1024        ) # Figure 14:   8 kB => SRAM
     emu.mem_map( 0x1FFF0000,  16 * 1024        ) # Figure 14:  16 kB => boot ROM
     emu.mem_map( 0x40000000, 512 * 1024        ) # Figure  6: 512 kB => APB     peripheral bus
@@ -120,10 +120,10 @@ if ( __name__ == '__main__' ) :
   # program emulator
 
   img = intelhex.IntelHex( args.file )
-  
+
   for addr in img.addresses() :
     emu.mem_write( addr, chr( img[ addr ] ) )
-  
+
   # reset   emulator
 
   ( tos, ) = struct.unpack( '<I', emu.mem_read( 0x00000000, 4 ) )
@@ -145,10 +145,9 @@ if ( __name__ == '__main__' ) :
   emu.reg_write( unicorn_arm.UC_ARM_REG_R13, 0   )
   emu.reg_write( unicorn_arm.UC_ARM_REG_R14, 0   )
   emu.reg_write( unicorn_arm.UC_ARM_REG_R15, 0   )
-  
+
   emu.reg_write( unicorn_arm.UC_ARM_REG_SP,  tos )
 
   # start   emulator
 
-  emu.emu_start( rst, 2 ** 32 - 1 )  
-
+  emu.emu_start( rst, 2 ** 32 - 1 )
