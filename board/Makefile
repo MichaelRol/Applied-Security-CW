@@ -27,14 +27,13 @@ program-${PROJECT}-term :
 	@putty -serial -sercfg 9600,8,n,1,N /dev/scale-board
 
 emulate-${PROJECT}      :
-	@python -O emulator.py --host 127.0.0.1 --port 1233 --file ${PROJECT}.hex
+	@python -O emulator.py --host 127.0.0.1 --port 1235 --file ${PROJECT}.hex
 emulate-${PROJECT}-term :
-	@putty -raw -P 1233 127.0.0.1
+	@putty -raw -P 1235 127.0.0.1
 
-emulate-helloworld      :
-	@python -O emulator.py --host 127.0.0.1 --port 1240 --file helloworld.hex
-emulate-helloworld-term :
-	@putty -raw -P 1237 127.0.0.1
 
 program-39214 :
 	@lpc21isp -wipe -hex ./39214.hex /dev/scale-board 9600 12000
+
+client       :
+	@python client.py '04:DEADBEEF'

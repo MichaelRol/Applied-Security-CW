@@ -144,62 +144,68 @@ uint8_t Hex2String(uint8_t hex){
   * \return       the number of octets read
   */
 
-int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
+// int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
+//   uint8_t len = String2Hex(x[0]) << 4 ^ String2Hex(x[1]);
+//   if(len > n_r) {
+//     return -1;
+//   }
+//
+//   uint8_t colon =  x[2];
+//   if(colon != 0x3A) {
+//     return -1;
+//   }
+//   for(int i = 0; i < len; ++i){
+//     r[i] = String2Hex(x[i+3]) << 4 ^ String2Hex(x[i+4]);
+//   }
+//   return len;
+// }
 
-  uint8_t len = String2Hex(x[0]) << 4 ^ String2Hex(x[1]);
-  if(len > n_r) {
-    return -1;
-  }
-
-  uint8_t colon =  x[2];
-  if(colon != 0x3A) {
-    return -1;
-  }
-
-  for(int i = 0; i < len; ++i){
-    r[i] = String2Hex(x[i+3]) << 4 ^ String2Hex(x[i+4]);
-  }
-
-  return len;
+char hex_to_char(int n) {
+  if (n > 0xF) return -1;
+  else if (n < 0xA) return n + 0x30;
+  else return n + 0x37;
 }
 
-int  octetstr_rd( uint8_t* r, int n_r          ) {
-  char x[ 2 + 1 + 2 * ( n_r ) + 1 ]; // 2-char length, 1-char colon, 2*n_r-char data, 1-char terminator
-
-  for( int i = 0; true; i++ ) {
-    x[ i ] = scale_uart_rd( SCALE_UART_MODE_BLOCKING );
-
-    if( x[ i ] == '\x0D' ) {
-      x[ i ] = '\x00'; break;
-    }
-  }
-
-  return _octetstr_rd( r, n_r, x );
+uint8_t char_to_hex(char c) {
+  if (c > 0x2F && c < 0x3A) return c - 0x30;
+  else if (c > 0x40 && c < 0x47) return c - 0x37;
+  else if (c > 0x60 && c < 0x67) return c - 0x57;
+  else return -1;
 }
+
+int  octetstr_rd(       uint8_t* r, int n_r ) {
+  char c1 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
+  char c2 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
+            scale_uart_rd(SCALE_UART_MODE_BLOCKING); // :
+  uint8_t length = (char_to_hex(c1) * 0x10) + char_to_hex(c2);
+  if (length > n_r) length = n_r;
+  for (int i = 0; i < length; i++) {
+    c1 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
+    c2 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
+    r[i] = (char_to_hex(c1) * 0x10) + char_to_hex(c2);
+  }
+  scale_uart_rd(SCALE_UART_MODE_BLOCKING); // CR
+  return length;
+}
+
 /** Write an octet string (or sequence of bytes) to   the UART, using a simple
   * length-prefixed, little-endian hexadecimal format.
   *
   * \param[in]  r the source      octet string written
   * \param[in]  n the number of octets written
   */
-void octetstr_wr( const uint8_t* x, int n_x ) {
-  uint8_t len1 = Hex2String((n_x >> 4) & 0x0F);
-  uint8_t len2 = Hex2String(n_x & 0x0F);
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, len1 );
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, len2 );
-  scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A );
-
-  for(int i = 0; i<n_x; ++i){
-    uint8_t char1 = Hex2String((x[i]>>4)&0x0F);
-    uint8_t char2 = Hex2String(x[i]&0x0F);
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, char1 );
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, char2 );
+  void octetstr_wr( const uint8_t* x, int n_x ) {
+    uint8_t n1 = hex_to_char(n_x / 0x10);
+    uint8_t n2 = hex_to_char(n_x % 0x10);
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, n1);
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, n2);
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, ':');
+    for (int i = 0; i < n_x; i++) {
+      scale_uart_wr(SCALE_UART_MODE_BLOCKING, hex_to_char(x[i] / 0x10));
+      scale_uart_wr(SCALE_UART_MODE_BLOCKING, hex_to_char(x[i] % 0x10));
+    }
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, '\x0D'); // CR
   }
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0D );
-  scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0A );
-
-  return;
-}
 
 
 /** Initialise an AES-128 encryption, e.g., expand the cipher key k into round
@@ -277,20 +283,27 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
     */
 
   int main( int argc, char* argv[] ) {
-
     if( !scale_init( &SCALE_CONF ) ) {
       return -1;
     }
 
     uint8_t cmd[ 1 ], c[ SIZEOF_BLK ], m[ SIZEOF_BLK ], k[ SIZEOF_KEY ] = { 0x4B, 0x3A, 0xAA, 0xC9, 0x9B, 0xA4, 0x7C, 0x34, 0xA5, 0x0B, 0x99, 0xB5, 0xC8, 0x75, 0xDB, 0x94 }, r[ SIZEOF_RND ];
 
-    while( true ) {
+    uint8_t testtt[1];
+
+    while (true) {
+      octetstr_rd( testtt, 1 );
+      octetstr_wr( testtt, 1 );
+    }
+
+    while( false ) {
+
       if( 1 != octetstr_rd( cmd, 1 ) ) {
         break;
       }
-
       switch( cmd[ 0 ] ) {
         case COMMAND_INSPECT : {
+          scale_uart_wr( SCALE_UART_MODE_BLOCKING, '4');
           uint8_t t = SIZEOF_BLK;
                       octetstr_wr( &t, 1 );
                   t = SIZEOF_KEY;
@@ -301,15 +314,18 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
           break;
         }
         case COMMAND_ENCRYPT : {
+          scale_uart_wr( SCALE_UART_MODE_BLOCKING, '5');
           if( SIZEOF_BLK != octetstr_rd( m, SIZEOF_BLK ) ) {
+            scale_uart_wr( SCALE_UART_MODE_BLOCKING, '6');
             break;
           }
           if( SIZEOF_RND != octetstr_rd( r, SIZEOF_RND ) ) {
+            scale_uart_wr( SCALE_UART_MODE_BLOCKING, '7');
             break;
           }
 
           //aes_init(       k, r );
-          scale_uart_wr( SCALE_UART_MODE_BLOCKING, 'h');
+
           scale_gpio_wr( SCALE_GPIO_PIN_TRG,  true );
           aes     ( c, m, k, r );
           scale_gpio_wr( SCALE_GPIO_PIN_TRG, false );
