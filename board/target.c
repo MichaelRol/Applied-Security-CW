@@ -143,34 +143,6 @@ uint8_t Hex2String(uint8_t hex){
   * \param[out] r the destination octet string read
   * \return       the number of octets read
   */
-
-char hex_to_char(int n) {
-  if (n > 0xF) return -1;
-  else if (n < 0xA) return n + 0x30;
-  else return n + 0x37;
-}
-
-uint8_t char_to_hex(char c) {
-  if (c > 0x2F && c < 0x3A) return c - 0x30;
-  else if (c > 0x40 && c < 0x47) return c - 0x37;
-  else if (c > 0x60 && c < 0x67) return c - 0x57;
-  else return -1;
-}
-
-// int  octetstr_rd(       uint8_t* r, int n_r ) {
-//   char c1 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
-//   char c2 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
-//             scale_uart_rd(SCALE_UART_MODE_BLOCKING); // :
-//   uint8_t length = (char_to_hex(c1) * 0x10) + char_to_hex(c2);
-//   if (length > n_r) length = n_r;
-//   for (int i = 0; i < length; i++) {
-//     c1 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
-//     c2 = scale_uart_rd(SCALE_UART_MODE_BLOCKING);
-//     r[i] = (char_to_hex(c1) * 0x10) + char_to_hex(c2);
-//   }
-//   scale_uart_rd(SCALE_UART_MODE_BLOCKING); // CR
-//   return length;
-// }
 int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
 
   uint8_t len = String2Hex(x[0]) << 4 ^ String2Hex(x[1]);
@@ -184,7 +156,7 @@ int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
   }
 
   for(int i = 0; i < len; ++i){
-    r[i] = String2Hex(x[i+3]) << 4 ^ String2Hex(x[i+4]);
+    r[i] = String2Hex(x[i*2+3]) << 4 ^ String2Hex(x[i*2+4]);
   }
 
   return len;
@@ -192,17 +164,12 @@ int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
 
 int  octetstr_rd( uint8_t* r, int n_r          ) {
   char x[ 2 + 1 + 2 * ( n_r ) + 1 ]; // 2-char length, 1-char colon, 2*n_r-char data, 1-char terminator
-  // int size;
   for( int i = 0; true; i++ ) {
     x[ i ] = scale_uart_rd( SCALE_UART_MODE_BLOCKING );
-    // size = i;
     if( x[ i ] == '\x0D' ) {
       x[ i ] = '\x00'; break;
     }
   }
-  // for (int y = 0; y <= size; y++) {
-  //   scale_uart_wr( SCALE_UART_MODE_BLOCKING, x[y] );
-  // }
   return _octetstr_rd( r, n_r, x );
 }
 
@@ -212,26 +179,13 @@ int  octetstr_rd( uint8_t* r, int n_r          ) {
   * \param[in]  r the source      octet string written
   * \param[in]  n the number of octets written
   */
-  // void octetstr_wr( const uint8_t* x, int n_x ) {
-  //   uint8_t n1 = hex_to_char(n_x / 0x10);
-  //   uint8_t n2 = hex_to_char(n_x % 0x10);
-  //   scale_uart_wr(SCALE_UART_MODE_BLOCKING, n1);
-  //   scale_uart_wr(SCALE_UART_MODE_BLOCKING, n2);
-  //   scale_uart_wr(SCALE_UART_MODE_BLOCKING, ':');
-  //   for (int i = 0; i < n_x; i++) {
-  //     scale_uart_wr(SCALE_UART_MODE_BLOCKING, hex_to_char(x[i] / 0x10));
-  //     scale_uart_wr(SCALE_UART_MODE_BLOCKING, hex_to_char(x[i] % 0x10));
-  //   }
-  //   scale_uart_wr(SCALE_UART_MODE_BLOCKING, '\x0D'); // CR
-  //
-  //   return;
-  // }
+
   void octetstr_wr( const uint8_t* x, int n_x ) {
     uint8_t len1 = Hex2String((n_x >> 4) & 0x0F);
     uint8_t len2 = Hex2String(n_x & 0x0F);
     scale_uart_wr( SCALE_UART_MODE_BLOCKING, len1 );
     scale_uart_wr( SCALE_UART_MODE_BLOCKING, len2 );
-    scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A );
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A ); //0x3A = :
 
     for(int i = 0; i<n_x; ++i){
       uint8_t char1 = Hex2String((x[i]>>4)&0x0F);
@@ -324,9 +278,8 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
       return -1;
     }
 
-    uint8_t cmd[ 1 ], c[ SIZEOF_BLK ], m[ SIZEOF_BLK ];//, k[ SIZEOF_KEY ] = { 0x4B, 0x3A, 0xAA, 0xC9, 0x9B, 0xA4, 0x7C, 0x34, 0xA5, 0x0B, 0x99, 0xB5, 0xC8, 0x75, 0xDB, 0x94 }, r[ SIZEOF_RND ];
-    uint8_t k[ SIZEOF_KEY ] = {0xCD, 0x97, 0x16, 0xE9, 0x5B, 0x42, 0xDD, 0x48, 0x69, 0x77, 0x2A, 0x34, 0x6A, 0x7F, 0x58, 0x13}, r[ SIZEOF_RND ];
-    // uint8_t m[SIZEOF_KEY] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F};
+    uint8_t cmd[ 1 ], c[ SIZEOF_BLK ], m[ SIZEOF_BLK ], k[ SIZEOF_KEY ] = { 0x4B, 0x3A, 0xAA, 0xC9, 0x9B, 0xA4, 0x7C, 0x34, 0xA5, 0x0B, 0x99, 0xB5, 0xC8, 0x75, 0xDB, 0x94 }, r[ SIZEOF_RND ];
+
     while( true ) {
 
       if( 1 != octetstr_rd( cmd, 1 ) ) {
@@ -358,8 +311,6 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
           scale_gpio_wr( SCALE_GPIO_PIN_TRG,  true );
           aes     ( c, m, k, r );
           scale_gpio_wr( SCALE_GPIO_PIN_TRG, false );
-            octetstr_wr( m, SIZEOF_BLK );
-            octetstr_wr( r, SIZEOF_RND );
           octetstr_wr( c, SIZEOF_BLK );
 
           break;
