@@ -35,5 +35,3 @@ emulate-${PROJECT}-term :
 program-39214 :
 	@lpc21isp -wipe -hex ./39214.hex /dev/scale-board 9600 12000
 
-client       :
-	@python client.py '04:DEADBEEF'

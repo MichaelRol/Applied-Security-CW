@@ -16,7 +16,7 @@
 So that we can calibrate and improve the assignment in the future, give us
 a rough idea how long (in hours) you spent on it *in total*:
 
-effort : [...] hours
+effort : [40] hours
 
 -------------------------------------------------------------------------------
 
@@ -29,7 +29,9 @@ source code or resources you used (if any) so it's clear what's your work
 and what isn't:
 
 [I made use of the board specific read function Dan Page posted on the forum
- under the thread "FAQs: lab. worksheets 1.1 and 1.2"]
+ under the thread "FAQs: lab. worksheets 1.1 and 1.2"
+ 
+ Also used str2octetstr( x ) and seq2str( x ) functions from lab-1-1.]
 
 -------------------------------------------------------------------------------
 
@@ -64,6 +66,20 @@ Any other documentation, notes or comments that you think are important or
 might be easy to overlook (e.g., a subtle issue or technique in associated
 source code) should go here:
 
-[...]
+[
+    Stage 1: To run my target.c on the board simply follow the instructions for
+    uploading a program to the board described in the first worksheet and 
+    assignment and then enter the input into the terminal as describe at the 
+    bottom of the assignment description. A makefile has been included in the
+    board folder where you can use make build-project to build the project and
+    make program-target to initate the programming of the board.
+
+    Stage 2: To run my attact use command:
+
+        python attack.py "traces.dat"
+
+    The file traces.dat has been included in the upload.
+
+]
 
 -------------------------------------------------------------------------------
