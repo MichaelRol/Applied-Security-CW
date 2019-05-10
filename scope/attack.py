@@ -138,20 +138,11 @@ def attack( argc, argv ) :
           H[i, j] = sbox[numpy.bitwise_xor(M[i,key_byte], j)]
           power_consumption[i, j] = byte_hamming_weight[H[i ,j]]
 
-            # H[i,j] = byte_hamming_weight[ sbox[M[i,k] ^ j] ]
-
-    max_correlation = 0
-    byte = 0
     corr_matrix = numpy.zeros(256)
     for i in range(256):
         for j in range(3500,5500):
-            corr_matrix[i] = max(corr_matrix[i], numpy.abs(numpy.corrcoef(H[:,i], T[0:t,j])[0][1]))
-            # correlation = numpy.abs(numpy.corrcoef(H[:,i], T[0:t,j])[0][1])
-            # if (correlation > max_correlation):
-                # max_correlation = correlation
-                # byte = i
+            corr_matrix[i] = max(corr_matrix[i], numpy.abs(numpy.corrcoef(power_consumption[:,i], T[0:t,j])[0][1]))
 
-    # key.append(byte)
     key.append(corr_matrix.argmax())
   #   chunk_size = 50
   #   num_chunks = s/chunk_size
@@ -161,9 +152,6 @@ def attack( argc, argv ) :
   #     for j in range (1, int(num_chunks)):
   #         corr_matrix[i] = max(corr_matrix[i], *numpy.corrcoef(T[:, (j - 1) * chunk_size:j * chunk_size].T, power_consumption[:, i])[chunk_size][:chunk_size])
 
-  #   key.append(corr_matrix.argmax())
-    
-  
 
   k = key
   c = C[0,:]

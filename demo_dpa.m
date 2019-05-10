@@ -92,7 +92,7 @@ if (strcmp(method,'correlation'))
     chunksize=50;
     chunks=n/50;
     for i=first:last
-            for j=1:chunks
+      for j=1:chunks
         cmatrix= corrcoef([traces(:,1+(j-1)*chunksize:j*chunksize)  power_consumption(:,i)]);
             key_trace(i,1+(j-1)*chunksize:j*chunksize) =cmatrix(chunksize+1,1:chunksize);
             
