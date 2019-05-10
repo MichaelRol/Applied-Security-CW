@@ -122,7 +122,7 @@ def traces_st( f, t, s, M, C, T ) :
 def attack( argc, argv ) :
   traces = traces_ld(argv[1])
   t = traces[0] # num of traces
-  s = 10000#traces[1] # num of samples per traces
+  s = 6000 # num of samples per traces
   M = traces[2] # M a t-by-16 matrix of AES-128  plaintexts
   C = traces[3] # C a t-by-16 matrix of AES-128 ciphertexts
   T = traces[4] # T a t-by-s  matrix of samples, i.e., the traces
@@ -132,6 +132,8 @@ def attack( argc, argv ) :
     H = numpy.zeros((t, 256), dtype = numpy.uint8)
 
     print("Attacking byte {0}...".format(key_byte))
+
+    #predict power consumption 
     power_consumption = numpy.zeros((t, 256), dtype = numpy.uint8)
     for i in range (0, t):
        for j in range (0,256):
@@ -139,19 +141,15 @@ def attack( argc, argv ) :
           power_consumption[i, j] = byte_hamming_weight[H[i ,j]]
 
     corr_matrix = numpy.zeros(256)
+    chunk_size = 50
+    num_chunks = s/chunk_size
+
+    #correlate real power consumption with predicted
     for i in range(256):
-        for j in range(3500,5500):
-            corr_matrix[i] = max(corr_matrix[i], numpy.abs(numpy.corrcoef(power_consumption[:,i], T[0:t,j])[0][1]))
+      for j in range (1, int(num_chunks)):
+        corr_matrix[i] = max(corr_matrix[i], numpy.abs(numpy.corrcoef(power_consumption[:,i], T[0:t,(j - 1) * chunk_size:j * chunk_size].T)[0][1]))
 
     key.append(corr_matrix.argmax())
-  #   chunk_size = 50
-  #   num_chunks = s/chunk_size
-  #   corr_matrix = numpy.zeros(256)
-
-  #   for i in range (0, 256):
-  #     for j in range (1, int(num_chunks)):
-  #         corr_matrix[i] = max(corr_matrix[i], *numpy.corrcoef(T[:, (j - 1) * chunk_size:j * chunk_size].T, power_consumption[:, i])[chunk_size][:chunk_size])
-
 
   k = key
   c = C[0,:]
@@ -173,23 +171,4 @@ def attack( argc, argv ) :
 
 if ( __name__ == '__main__' ) :
   key = attack( len( sys.argv ), sys.argv )
-
-# key = []
-
-# for k in range(16):
-#     print("Attacking byte {0}...".format(k))
-#     for i in range(t):
-#         for j in range(256):
-#             H[i,j] = hamming_weights[ sbox[M[i,k] ^ j] ]
-
-#     max_correlation = 0
-#     byte = 0
-
-#     for i in range(256):
-#         for j in range(3500,5500):
-#             correlation = numpy.abs(numpy.corrcoef(H[:,i], T[0:t,j])[0][1])
-#             if (correlation > max_correlation):
-#                 max_correlation = correlation
-#                 byte = i
-
-#     key.append(byte)
+  
