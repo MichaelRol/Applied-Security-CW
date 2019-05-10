@@ -121,7 +121,7 @@ def traces_st( f, t, s, M, C, T ) :
 
 def attack( argc, argv ) :
   traces = traces_ld(argv[1])
-  t = traces[0] # num of traces
+  t = 200 # num of traces
   s = 6000 # num of samples per traces
   M = traces[2] # M a t-by-16 matrix of AES-128  plaintexts
   C = traces[3] # C a t-by-16 matrix of AES-128 ciphertexts
@@ -146,7 +146,7 @@ def attack( argc, argv ) :
 
     #correlate real power consumption with predicted
     for i in range(256):
-      for j in range (1, int(num_chunks)):
+      for j in range (60, int(num_chunks)):
         corr_matrix[i] = max(corr_matrix[i], numpy.abs(numpy.corrcoef(power_consumption[:,i], T[0:t,(j - 1) * chunk_size:j * chunk_size].T)[0][1]))
 
     key.append(corr_matrix.argmax())

@@ -164,7 +164,7 @@ int  _octetstr_rd(       uint8_t* r, int n_r, char* x ) {
 
 int  octetstr_rd( uint8_t* r, int n_r          ) {
   char x[ 2 + 1 + 2 * ( n_r ) + 1 ]; // 2-char length, 1-char colon, 2*n_r-char data, 1-char terminator
-  for( int i = 0; true; i++ ) {
+  for(int i = 0; true; i++ ) {
     x[ i ] = scale_uart_rd( SCALE_UART_MODE_BLOCKING );
     if( x[ i ] == '\x0D' ) {
       x[ i ] = '\x00'; break;
@@ -181,20 +181,21 @@ int  octetstr_rd( uint8_t* r, int n_r          ) {
   */
 
   void octetstr_wr( const uint8_t* x, int n_x ) {
-    uint8_t len1 = Hex2String((n_x >> 4) & 0x0F);
-    uint8_t len2 = Hex2String(n_x & 0x0F);
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, len1 );
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, len2 );
-    scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A ); //0x3A = :
 
-    for(int i = 0; i<n_x; ++i){
-      uint8_t char1 = Hex2String((x[i]>>4)&0x0F);
-      uint8_t char2 = Hex2String(x[i]&0x0F);
-      scale_uart_wr( SCALE_UART_MODE_BLOCKING, char1 );
-      scale_uart_wr( SCALE_UART_MODE_BLOCKING, char2 );
+    uint8_t len1 = Hex2String((n_x >> 4) & 0x0F); // two bits to describe number of bits in string
+    uint8_t len2 = Hex2String(n_x & 0x0F);
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, len1);
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, len2);
+    scale_uart_wr(SCALE_UART_MODE_BLOCKING, 0x3A); //0x3A = :
+
+    for (int i = 0; i<n_x; ++i) {
+      uint8_t char1 = Hex2String((x[i] >> 4) & 0x0F);
+      uint8_t char2 = Hex2String(x[i] & 0x0F);
+      scale_uart_wr( SCALE_UART_MODE_BLOCKING, char1);
+      scale_uart_wr( SCALE_UART_MODE_BLOCKING, char2);
     }
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0D );
-    scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0A );
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0D);
+    scale_uart_wr( SCALE_UART_MODE_BLOCKING, 0x0A);
 
     return;
   }
@@ -364,7 +365,7 @@ void aes     ( uint8_t* c, const uint8_t* m, const uint8_t* k, const uint8_t* r 
   }
 
   void aes_enc_rnd_key( aes_gf28_t* s, aes_gf28_t* rk ) {
-    for (int x = 0; x < 16; x++){
+    for (int x = 0; x < 16; x++){ 
       s[x] = s[x] ^ rk[x];
     }
   }
