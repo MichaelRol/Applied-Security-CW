@@ -4,7 +4,7 @@
 # which can be found via http://creativecommons.org (and should be included as
 # LICENSE.txt within the associated archive or repository).
 
-import numpy, struct, sys, Crypto.Cipher.AES as AES
+import numpy, struct, sys, binascii, Crypto.Cipher.AES as AES
 
 sbox = numpy.array([
     0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -43,6 +43,14 @@ byte_hamming_weight = numpy.array([
     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 ])
+
+def seq2str( x ) :
+  return ''.join( [ chr( t ) for t in x ] )
+
+def str2octetstr( x ) :
+  return ( '%02X' % ( len( x ) ) ) + ':' + ( binascii.b2a_hex( x ) )
+
+
 ## Load  a trace data set from an on-disk file.
 ##
 ## \param[in] f the filename to load  trace data set from
@@ -131,8 +139,6 @@ def attack( argc, argv ) :
   for key_byte in range(16):
     H = numpy.zeros((t, 256), dtype = numpy.uint8)
 
-    print("Attacking byte {0}...".format(key_byte))
-
     #predict power consumption 
     power_consumption = numpy.zeros((t, 256), dtype = numpy.uint8)
     for i in range (0, t):
@@ -162,11 +168,13 @@ def attack( argc, argv ) :
   test = AES.new( k ).encrypt( m )
 
   if( test == c ) :
-    print('AES.Enc( k, m ) == c')
+    print('Success! AES.Enc( k, m ) == c')
   else :
     print('AES.Enc( k, m ) != c')
-  print(key)
 
+  k = str2octetstr( seq2str( key ) )
+  print("Number of traces used: " + str(t))
+  print("Key: " + k)
   return key
 
 if ( __name__ == '__main__' ) :
